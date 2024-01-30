@@ -1,24 +1,46 @@
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { auth } from '../firebase/setup'
 import food from "../images/food.jpg"
 import mail from "../images/mail.png"
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const EmailLogin = () => {
+
+    const navigate = useNavigate()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     
     const emailLogin = async() =>{
         try{
-           const data = await signInWithEmailAndPassword(auth, email, password)
-        }catch(err){
-            console.error(err)
+            const data = await signInWithEmailAndPassword(auth, email, password)
+            auth.currentUser?.emailVerified ? toast.success("LoggedIn successfully") : toast.error("Please verify email")
+            setTimeout(()=>{
+                auth.currentUser?.emailVerified && navigate("/")
+            },1000)
+        }
+        catch(err:any){
+            console.error(err);
+            let errorMessage = "An error occurred. Please try again.";
+
+            if (err.code === "auth/invalid-credential") {
+                errorMessage = "Invalid email or password.";
+            } else if (err.code === "auth/wrong-password") {
+                errorMessage = "Invalid email or password.";
+            } else if (err.code === "auth/too-many-requests") {
+                errorMessage = "Too many unsuccessful login attempts. Please try again later.";
+            }
+
+            toast.error(errorMessage);
         }
     }
 
     return (
+        <>
+        <ToastContainer/>
         <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-black bg-opacity-85 transition-opacity" style={{backgroundImage:`linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,7)), url(${food})`}}></div>
 
@@ -52,6 +74,7 @@ const EmailLogin = () => {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 

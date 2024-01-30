@@ -6,9 +6,13 @@ import email from "../images/email.png"
 import food from "../images/food.jpg"
 import { RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '../firebase/setup'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
+
+    const navigate = useNavigate()
 
     const [phone, setPhone] = useState("")
     const [user,setUser] = useState<any>(null)
@@ -19,29 +23,41 @@ const Login = () => {
             const recaptcha = new RecaptchaVerifier(auth, "recaptcha", {})
             const confirmation = await signInWithPhoneNumber(auth, phone, recaptcha)
             setUser(confirmation)
+            toast.success("OTP sent successfully")
         }
         catch(err){
             console.error(err)
+            toast.error("Something went wrong")
         }
     }
 
     const verifyOtp = async() => {
         try{
             await user.confirm(otp)
+            auth.currentUser?.phoneNumber && toast.success("Logged In Successfully")
+            auth.currentUser?.phoneNumber && navigate("/")
         }catch(err){
             console.error(err)
+            toast.error("Something went wrong")
         }
     }
 
     const googleSignin = async() => {
         try{
             await signInWithPopup(auth, googleProvider)
+            auth.currentUser?.email && toast.success("Logged In Successfully")
+            setTimeout(()=>{
+                auth.currentUser?.email && navigate("/")
+            },1000)
         }catch(err){
             console.error(err)
+            toast.error("Something went wrong")
         }
     }
 
     return (
+        <>
+        <ToastContainer/>
         <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-black bg-opacity-85 transition-opacity" style={{backgroundImage:`linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,7)), url(${food})`}}></div>
 
@@ -99,6 +115,7 @@ const Login = () => {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 

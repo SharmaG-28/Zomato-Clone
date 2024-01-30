@@ -3,9 +3,13 @@ import search from "../images/search.png"
 import food from "../images/food.jpg"
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '../firebase/setup'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Signup = () => {
+
+    const navigate = useNavigate()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -13,8 +17,13 @@ const Signup = () => {
     const googleSignin = async() =>{
         try{
             await signInWithPopup(auth, googleProvider)
+            auth.currentUser?.email && toast.success("Logged In Successfully")
+            setTimeout(()=>{
+                auth.currentUser?.email && navigate("/")
+            },1000)
         }catch(err){
             console.error(err)
+            toast.error("Something went wrong")
         }
     }
 
@@ -23,13 +32,23 @@ const Signup = () => {
             await createUserWithEmailAndPassword(auth, email, password)
             onAuthStateChanged(auth,async(user:any)=>{
                 await sendEmailVerification(user)
+                toast.success("Verification Link has been sent to your Email. Please verify your Email")
             })
-        }catch(err){
+        }catch(err:any){
             console.error(err)
+            let errorMessage = "An error occurred. Please try again.";
+
+            if (err.code === "auth/email-already-in-use") {
+                errorMessage = "Email has already used.";
+            }
+
+            toast.error(errorMessage);
         }
     }
 
     return (
+        <>
+        <ToastContainer/>
         <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-black bg-opacity-85 transition-opacity" style={{backgroundImage:`linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,7)), url(${food})`}}></div>
 
@@ -67,6 +86,7 @@ const Signup = () => {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 
